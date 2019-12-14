@@ -7,6 +7,8 @@ class Cell:
         self.number = None
         self.walls = [True,True,True,True]
         self.visited = False
+        self.beginning = False
+        self.ending = False
         
     def check(self):
         global n
@@ -42,24 +44,36 @@ class Cell:
             return None
 
 l = 600
-n = 30
+n = 3
 s = l/n
 grid = [[ Cell(i,j) for i in range(n)] for j in range(n)]
 stack = []
-current = grid[random.randint(0,n-1)][random.randint(0,n-1)]
+start = [random.randint(0,n-1),random.randint(0,n-1)]
+koniec = [random.randint(0,n-1),random.randint(0,n-1)]
+grid[random.randint(0,n-1)][random.randint(0,n-1)].ending = True
+current = grid[start[0]][start[1]]
+grid[start[0]][start[1]].beginning = True
 k = 1
 current.number = k
 k = k + 1
 number_show = False
+done = False
 
 
 def show(grid):
+    global current
+    global start
+    global koniec
     textAlign(CENTER)
     textSize(s/3)
     for i in grid:
         for j in i:
             noStroke()
-            if j.visited:
+            if j.beginning:
+                fill(0,255,255)
+            elif j.ending:
+                fill(255,255,0)
+            elif j.visited:
                 fill(0,0,255)
             else:
                 fill(255,0,0)
@@ -78,6 +92,8 @@ def show(grid):
                 line(j.x*s,j.y*s+s,j.x*s+s,j.y*s+s)
             if j.walls[3]:
                 line(j.x*s,j.y*s,j.x*s,j.y*s+s)
+    fill(0,255,0)
+    square(current.x*s+s/4,current.y*s+s/4,s/2)
 
 
 def removeWalls(a,b):
@@ -102,14 +118,12 @@ def setup():
     background(255)
     
 def draw():
+    global done
     global k
     show(grid)
     global current
-    if current != None:
+    if not done:
         current.visited = True
-        noStroke()
-        fill(0,255,0)
-        square(current.x*s+s/4,current.y*s+s/4,s/2)
         #STEP 1
         next = current.check()
         if (next != None):
@@ -127,15 +141,42 @@ def draw():
             k = k - 1
             current = stack.pop()
         else:
-            current = None
+            done = True
+    else:
+        show(grid)
+        if current.ending:
+            background(255)
+            global l
+            textAlign(CENTER)
+            textSize(l/4)
+            fill(0)
+            text('WINNER', l/2, l/2+l/16)
+            noLoop()
         
 
 def keyPressed():
+    global done
     global number_show
-    if key == 'n':
-        if number_show:
-            number_show = False
-        else:
-            number_show = True
+    global current
+    if not done:
+        if key == 'n':
+            if number_show:
+                number_show = False
+            else:
+                number_show = True
+    else:
+        if key == CODED:
+            if keyCode == UP:
+                if current.y>0 and not current.walls[0]:
+                    current = grid[current.x][current.y-1]
+            if keyCode == RIGHT:
+                if current.x<n-1 and not current.walls[1]:
+                    current = grid[current.x+1][current.y]
+            if keyCode == DOWN:
+                if current.y<n-1 and not current.walls[2]:
+                    current = grid[current.x][current.y+1]
+            if keyCode == LEFT:
+                if current.x>0 and not current.walls[3]:
+                    current = grid[current.x-1][current.y]
     if key =='esc':
         exit()
